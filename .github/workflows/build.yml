@@ -21,18 +21,33 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: 🏗️ Configurar Android SDK
-        uses: android-actions/setup-android@v3
-        with:
-          cmdline-tools-version: 10406988
+      - name: 🔍 Verificar SDK pré-instalada
+        run: |
+          echo "ANDROID_HOME=$ANDROID_HOME"
+          ls -la $ANDROID_HOME/ || echo "ANDROID_HOME não encontrado"
+          ls -la /usr/local/lib/android/sdk/ 2>/dev/null || echo "SDK em /usr/local/lib/android/sdk/ não encontrado"
+          # Tentar localizar o sdkmanager
+          which sdkmanager 2>/dev/null || find / -name "sdkmanager" -type f 2>/dev/null | head -5
+
+      - name: ✅ Aceitar licenças do Android SDK
+        run: |
+          # O runner do GitHub já tem Android SDK pré-instalado
+          SDK_MANAGER=$(find / -name "sdkmanager" -type f 2>/dev/null | head -1)
+          if [ -n "$SDK_MANAGER" ]; then
+            yes | $SDK_MANAGER --licenses > /dev/null 2>&1 || true
+            echo "Licenças aceitas via $SDK_MANAGER"
+          else
+            echo "sdkmanager não encontrado, tentando via gradle..."
+          fi
+          # Garantir que o ANDROID_HOME está correto
+          if [ -d "/usr/local/lib/android/sdk" ]; then
+            echo "ANDROID_HOME=/usr/local/lib/android/sdk" >> $GITHUB_ENV
+          fi
 
       - name: 🐘 Configurar Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
           gradle-version: "8.5"
-
-      - name: 🧹 Gerar wrapper do Gradle
-        run: gradle wrapper --gradle-version 8.5
 
       - name: 🔨 Compilar o app (debug)
         run: ./gradlew assembleDebug
@@ -58,8 +73,7 @@ jobs:
           path: app/build/outputs/apk/release/*.apk
           if-no-files-found: warn
 
-      - name: 📋 Listar outputs (debug)
-        run: ls -la app/build/outputs/apk/debug/ || echo "Nenhum APK debug encontrado"
-
-      - name: 📋 Listar outputs (release)
-        run: ls -la app/build/outputs/apk/release/ || echo "Nenhum APK release encontrado"
+      - name: 📋 Listar outputs
+        run: |
+          ls -la app/build/outputs/apk/debug/ 2>/dev/null || echo "Nenhum APK debug encontrado"
+          ls -la app/build/outputs/apk/release/ 2>/dev/null || echo "Nenhum APK release encontrado"
