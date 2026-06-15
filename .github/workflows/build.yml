@@ -1,0 +1,65 @@
+name: Build Android App
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Checkout do código
+        uses: actions/checkout@v4
+
+      - name: ☕ Configurar JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: 🏗️ Configurar Android SDK
+        uses: android-actions/setup-android@v3
+        with:
+          cmdline-tools-version: 10406988
+
+      - name: 🐘 Configurar Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: "8.5"
+
+      - name: 🧹 Gerar wrapper do Gradle
+        run: gradle wrapper --gradle-version 8.5
+
+      - name: 🔨 Compilar o app (debug)
+        run: ./gradlew assembleDebug
+        env:
+          CI: true
+
+      - name: 🔨 Compilar o app (release)
+        run: ./gradlew assembleRelease
+        env:
+          CI: true
+
+      - name: 📦 Upload do APK Debug
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: app/build/outputs/apk/debug/*.apk
+          if-no-files-found: warn
+
+      - name: 📦 Upload do APK Release
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-release
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: warn
+
+      - name: 📋 Listar outputs (debug)
+        run: ls -la app/build/outputs/apk/debug/ || echo "Nenhum APK debug encontrado"
+
+      - name: 📋 Listar outputs (release)
+        run: ls -la app/build/outputs/apk/release/ || echo "Nenhum APK release encontrado"
