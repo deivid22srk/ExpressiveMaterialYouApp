@@ -37,6 +37,8 @@ android {
 
     kotlinOptions {
         jvmTarget = "17"
+        // Opt-in para APIs experimentais do Material3 (ModalBottomSheet, etc.)
+        freeCompilerArgs += "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api"
     }
 
     buildFeatures {
