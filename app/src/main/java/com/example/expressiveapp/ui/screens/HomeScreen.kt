@@ -357,9 +357,9 @@ fun ProgressCard() {
 
             Spacer(modifier = Modifier.height(12.dp))
 
-            // Barra de progresso linear com gradiente
+            // Barra de progresso linear
             LinearProgressIndicator(
-                progress = { progress },
+                progress = progress,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(12.dp)
